@@ -1,4 +1,4 @@
-import pygame, sys
+import pygame, sys, time
 from pygame.locals import * # ici il y a vraiment toutes les touches genre espace ou flèches directionnelles, pas mal
 
 # ----------------------------- PARAMETRAGES DU JEU -----------------------------
@@ -57,6 +57,11 @@ class Joueur(Lutin):
         self.delta_x = 4
         self.delta_y = 4
     
+    def idle(self):
+        """
+        """
+        self.deplacer()
+
     def deplacer(self):
         """
         Permet le deplacement de la boite
@@ -101,6 +106,7 @@ class Eleve(Lutin):
         self.infos_dict = infos
         self.nom = infos["nom"]
         self.textes = infos["textes"]
+        self.copie_textes = self.textes.copy()
 
         if "jeu" in infos: 
             self.pnj_special = callable(infos["jeu"])
@@ -109,15 +115,52 @@ class Eleve(Lutin):
 
         # DEPLACEMENTS ET POSITIONS
         self.rect.center = infos["position"]
+        
+    def idle(self):
+        """
+        Cette methode accomplit toutes les actions que le PNJ doit pouvoir executer 
+        en permanence si les conditions sont remplies
+        """
+        if self.rect.colliderect(JOUEUR.rect): # SI LE JOUEUR EST PROCHE DU PNJ
+            if pygame.key.get_pressed()[K_SPACE] and self.etat != "DIALOGUE_EN_COURS": # LANCEMENT DU DIALOGUE
+                self.etat = "DIALOGUE_EN_COURS"
+                time.sleep(0.2)
+                return
+            
+            if pygame.key.get_pressed()[K_SPACE] and self.etat == "DIALOGUE_EN_COURS": # SUITE DU DIALOGUE
+                self.copie_textes.pop(0)
+                time.sleep(0.2)
+                return
+
+            if self.etat == "DIALOGUE_EN_COURS": # AFFCICHAGE DU DIALOGUE
+                if self.copie_textes == []:
+                    self.copie_textes = self.textes.copy()
+                    self.etat = "IDLE"
+                    return
+                bulle_info(self.copie_textes[0], DISPLAYSURFACE)
+                return
+            
+            return
+
+        #
+        self.copie_textes = self.textes.copy()
+        self.etat = "IDLE"
+        
+        
+    def dialogue(self):
+        pass
+
+LISTE_ETATS = ["IDLE", "ATTENTE_CONFIRMATION_DIALOGUE", "DIALOGUE_EN_COURS"]
 
 # ----------------------------- VARIABLES -----------------------------
 # ------- LUTINS ET ASSETS -------
 JOUEUR = Joueur() # LE JOUEUR
-ELEVE_1 = Eleve({
+
+ELEVE_1 = Eleve({ # NOTRE PNJ 1
     "chemin_image": "assets/pnj.png",
     "nom": "Bob",
     "position": (120, 40),
-    "textes": ["Salut !", "Tu veux jouer ?"]
+    "textes": ["Salut !", "Bla bla bla bla bla bla bla bla bla bla bla bla ", "bla bla bla bla ", "bla bla bla bla bla "]
 })
 
 all_sprites = pygame.sprite.Group() # GROUPE UTILISE POUR AFFICHER
@@ -135,8 +178,31 @@ horloge_globale = pygame.time.get_ticks()
 # ------- COLLISIONS -------
 
 # ------- TEXTE -------
-def bulle_info(texte):
+# !! AJOUTER UNE ANIMATION MACHINE A ECRIRE
+def bulle_info(texte, surface):
+    """
+    """
+    assert len(texte) < 130, "Le texte est trop long pour être affiché en une fois (max 130car)"
+
+    bulle = pygame.image.load("assets/bulle.png")
+    liste_texte = []
+    while len(texte) > 26 * len(liste_texte) + 1:
+        liste_texte.append(texte[0 + 26*len(liste_texte) : 26 + 26*len(liste_texte)])
+    
+    surface.blit(bulle, (50, 400))
+    
+    for i in range(len(liste_texte)):
+        txt = liste_texte[i]
+        surface_texte = police_principale.render(txt, True, NOIR)    
+        
+        surface.blit(surface_texte, (50, 400 + 30*i))
+    
+def dialogue(liste_texte, index):
+    """
+    """
     pass
+    
+
 
 # ------- JEU ------- 
 
@@ -159,16 +225,17 @@ while True:
         sys.exit()
 
     # ----------------- JEU -----------------
-    # PERMETTRE LE DEPLACEMENT DU JOUEUR
-    JOUEUR.deplacer()
 
     # ----------------- AFFICHAGE -----------------
     # REPEINDRE L'ECRAN
     DISPLAYSURFACE.fill(BLANC)
 
-    # AFFICHER CHAQUE ELEMENT
+    # AFFICHER CHAQUE ELEMENT ET EXECUTER LEURS ACTIONS
     for lutin in all_sprites:
         lutin.afficher(DISPLAYSURFACE)
+        lutin.idle()
+
+    # bulle_info("Test, dialogue de fouuuuuu lifoz fiejfezoi ufeoiz ufoiezufoiez ufoiezufioezuioezufi zoifuezoifeuoiz", DISPLAYSURFACE)
 
     # REAFFICHER L'ECRAN
     pygame.display.update()
