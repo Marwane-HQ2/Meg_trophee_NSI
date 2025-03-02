@@ -28,7 +28,23 @@ pygame.display.set_caption("Meg")
 
 
 # ----------------------------- CLASSES -----------------------------
-class Joueur(pygame.sprite.Sprite):
+class Lutin(pygame.sprite.Sprite):
+    """
+    Cette classe regroupe toutes les méthodes communes à tout les lutins (en plus de donner 
+    donner accès aux méthodes de la classe Sprite de pygame).
+    """
+    def __init__(self):
+        super().__init__()
+    
+    def afficher(self, surface):
+        """
+        Affiche l'élément sur la surface donnée en paramètre
+        pre: surface (SURFACE)
+        post:
+        """
+        surface.blit(self.image, self.rect) 
+
+class Joueur(Lutin):
     def __init__(self):
         super().__init__()
 
@@ -40,14 +56,6 @@ class Joueur(pygame.sprite.Sprite):
         self.rect.center = (SCREEN_WIDTH//2 , SCREEN_HEIGHT//2) # POSTITION DE DEPART
         self.delta_x = 4
         self.delta_y = 4
-
-    def afficher(self, surface):
-        """
-        Affiche l'élément sur la surface donnée en paramètre
-        pre: surface (SURFACE)
-        post:
-        """
-        surface.blit(self.image, self.rect) 
     
     def deplacer(self):
         """
@@ -55,7 +63,7 @@ class Joueur(pygame.sprite.Sprite):
         """
         pressed_keys = pygame.key.get_pressed()
         if pressed_keys[K_LEFT]:
-            if self.rect.left > 0: # SI LA BOITE EST A GAUCHE
+            if self.rect.left > 0:
                 self.rect.move_ip(-1*self.delta_x, 0)
 
         if pressed_keys[K_RIGHT]:
@@ -63,20 +71,61 @@ class Joueur(pygame.sprite.Sprite):
                 self.rect.move_ip(self.delta_x, 0)
 
         if pressed_keys[K_UP]:
-            if self.rect.top > 0:
+            if self.rect.center[1] > 0:
                 self.rect.move_ip(0, -1*self.delta_y)
         
         if pressed_keys[K_DOWN]:
             if self.rect.bottom < SCREEN_HEIGHT :
                 self.rect.move_ip(0, self.delta_y)
 
+class Eleve(Lutin):
+    def __init__(self, infos):
+        """
+        Structure du dictionnaire contenant les informations du pnj:
+        {
+            "chemin_image": (str)
+            "nom": (str),
+            "position": (tuple)
+            "textes": (list)
+            "jeu": (?) # (lambda / class / fonction)
+            "": , # Et si on ajoutait des récompenses ????
+        }
+        """
+        super().__init__()
+
+        # CHARGEMENT DE L'IMAGE
+        self.image = pygame.image.load(infos["chemin_image"])
+        self.rect = self.image.get_rect()
+
+        # INFOS PERSO
+        self.infos_dict = infos
+        self.nom = infos["nom"]
+        self.textes = infos["textes"]
+
+        if "jeu" in infos: 
+            self.pnj_special = callable(infos["jeu"])
+            if self.pnj_special:
+                self.fonction_jeu = infos["jeu"]
+
+        # DEPLACEMENTS ET POSITIONS
+        self.rect.center = infos["position"]
 
 # ----------------------------- VARIABLES -----------------------------
 # ------- LUTINS ET ASSETS -------
 JOUEUR = Joueur() # LE JOUEUR
+ELEVE_1 = Eleve({
+    "chemin_image": "assets/pnj.png",
+    "nom": "Bob",
+    "position": (120, 40),
+    "textes": ["Salut !", "Tu veux jouer ?"]
+})
 
 all_sprites = pygame.sprite.Group() # GROUPE UTILISE POUR AFFICHER
-all_sprites.add(JOUEUR)
+all_sprites.add(ELEVE_1)
+
+all_sprites.add(JOUEUR) # L'ORDRE D'AJOUT DES LUTINS DANS LE GROUPE INFLUE SUR
+#LE PARCOURS DES VALEURS LORSQU'ON AFFICHE LES LUTINS, LE DERNIER LUTIN AJOUTE EST
+#LE PLUS AU DESSUS, UN PEU COMME UN TAMPON
 
 # ------- TEMPS -------
 horloge_globale = pygame.time.get_ticks()
