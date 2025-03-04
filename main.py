@@ -15,8 +15,9 @@ NOIR = (0, 0, 0)
 BLANC = (255, 255, 255)
 
 # TEXTE 
-police_titre = pygame.font.Font("IndieFlower-Regular.ttf", 45) # CREER UNE POLICE 
-police_principale = pygame.font.Font("IndieFlower-Regular.ttf", 35)
+police_titre = pygame.font.Font("assets/font/IndieFlower-Regular.ttf", 45) # CREER UNE POLICE 
+police_principale = pygame.font.Font("assets/font/IndieFlower-Regular.ttf", 35)
+police_nom =  pygame.font.Font("assets/font/IndieFlower-Regular.ttf", 35) # CHANGER LA POLICE D'AFFFICHAGE DES NOMS
 
 # INFOS ECRAN
 SCREEN_WIDTH = 500
@@ -115,6 +116,7 @@ class Eleve(Lutin):
 
         # DEPLACEMENTS ET POSITIONS
         self.rect.center = infos["position"]
+        self.etat = "IDLE"
         
     def idle(self):
         """
@@ -128,7 +130,8 @@ class Eleve(Lutin):
                 return
             
             if pygame.key.get_pressed()[K_SPACE] and self.etat == "DIALOGUE_EN_COURS": # SUITE DU DIALOGUE
-                self.copie_textes.pop(0)
+                if self.copie_textes != []:
+                    self.copie_textes.pop(0)
                 time.sleep(0.2)
                 return
 
@@ -137,12 +140,11 @@ class Eleve(Lutin):
                     self.copie_textes = self.textes.copy()
                     self.etat = "IDLE"
                     return
-                bulle_info(self.copie_textes[0], DISPLAYSURFACE)
+                bulle_info(self.copie_textes[0], self.nom, DISPLAYSURFACE)
                 return
             
             return
 
-        #
         self.copie_textes = self.textes.copy()
         self.etat = "IDLE"
         
@@ -157,14 +159,31 @@ LISTE_ETATS = ["IDLE", "ATTENTE_CONFIRMATION_DIALOGUE", "DIALOGUE_EN_COURS"]
 JOUEUR = Joueur() # LE JOUEUR
 
 ELEVE_1 = Eleve({ # NOTRE PNJ 1
-    "chemin_image": "assets/pnj.png",
-    "nom": "Bob",
+    "chemin_image": "assets/pnj/01.png",
+    "nom": "Nom 1",
     "position": (120, 40),
     "textes": ["Salut !", "Bla bla bla bla bla bla bla bla bla bla bla bla ", "bla bla bla bla ", "bla bla bla bla bla "]
 })
 
+ELEVE_2 = Eleve({
+    "chemin_image": "assets/pnj/02.png",
+    "nom": "Nom 2",
+    "position": (160, 50),
+    "textes": ["125carLa vie est un voyage plein de surprises, il faut savoir apprécier chaque moment et saisir les opportunités qui se présentent"]
+})
+
+ELEVE_3 = Eleve({
+    "chemin_image": "assets/pnj/03.png",
+    "nom": "Nom 3",
+    "position": (SCREEN_WIDTH//3, SCREEN_HEIGHT//2),
+    "textes": ["ok"],
+    # "jeu": 
+})
+
 all_sprites = pygame.sprite.Group() # GROUPE UTILISE POUR AFFICHER
 all_sprites.add(ELEVE_1)
+all_sprites.add(ELEVE_2)
+all_sprites.add(ELEVE_3)
 
 all_sprites.add(JOUEUR) # L'ORDRE D'AJOUT DES LUTINS DANS LE GROUPE INFLUE SUR
 #LE PARCOURS DES VALEURS LORSQU'ON AFFICHE LES LUTINS, LE DERNIER LUTIN AJOUTE EST
@@ -179,30 +198,39 @@ horloge_globale = pygame.time.get_ticks()
 
 # ------- TEXTE -------
 # !! AJOUTER UNE ANIMATION MACHINE A ECRIRE
-def bulle_info(texte, surface):
+def bulle_info(texte, nom, surface, choix=False):
     """
     """
-    assert len(texte) < 130, "Le texte est trop long pour être affiché en une fois (max 130car)"
-
     bulle = pygame.image.load("assets/bulle.png")
     liste_texte = []
+    
+    # AFFICHER LE NOM
+    surface_nom = police_nom.render(nom, True, NOIR)
+    surface.blit(surface_nom, (50, 370))
+    
+    # AFFICHER LA BULLE
+    surface.blit(bulle, (50, 400))
+
+    if choix:
+        assert len(texte["texte"]) < 78, "Le texte est trop long pour être affiché en une fois (max 78car)"
+    assert len(texte) < 131, "Le texte est trop long pour être affiché en une fois (max 130car)"
+
+    # COUPER LE TEXTE
     while len(texte) > 26 * len(liste_texte) + 1:
         liste_texte.append(texte[0 + 26*len(liste_texte) : 26 + 26*len(liste_texte)])
     
-    surface.blit(bulle, (50, 400))
-    
+    # AFFICHER LE TEXTE
     for i in range(len(liste_texte)):
         txt = liste_texte[i]
         surface_texte = police_principale.render(txt, True, NOIR)    
         
         surface.blit(surface_texte, (50, 400 + 30*i))
+    return
     
 def dialogue(liste_texte, index):
     """
     """
     pass
-    
-
 
 # ------- JEU ------- 
 
