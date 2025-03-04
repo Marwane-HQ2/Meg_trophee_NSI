@@ -211,10 +211,10 @@ def bulle_info(texte, nom, surface, choix=False):
     # AFFICHER LA BULLE
     surface.blit(bulle, (50, 400))
 
-    if choix:
-        assert len(texte["texte"]) < 78, "Le texte est trop long pour être affiché en une fois (max 78car)"
-    assert len(texte) < 131, "Le texte est trop long pour être affiché en une fois (max 130car)"
-
+    if True: # VARIABLE TEMPORAIRE LOCALE
+        temp = 78 if choix else 130
+        assert len(texte["texte"]) < temp, "Le texte est trop long pour être affiché en une fois (max 78car)"
+    
     # COUPER LE TEXTE
     while len(texte) > 26 * len(liste_texte) + 1:
         liste_texte.append(texte[0 + 26*len(liste_texte) : 26 + 26*len(liste_texte)])
